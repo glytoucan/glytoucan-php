@@ -1,0 +1,1 @@
+Please refer to [local environment on Docker](https://bitbucket.org/aokinobu/docker-glytoucan) for a simple setup using the test webservice and stanza.

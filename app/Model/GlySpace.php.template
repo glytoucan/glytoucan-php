@@ -1,0 +1,279 @@
+<?php
+class GlySpace extends AppModel {
+	public $name = 'GlySpace';
+	public $useTable = false;
+	// url of Websrvise
+	//private $urlBase = 'http://www.glyspace.org:8080/GlySpace-0.2/service';
+  //private $urlBase = 'http://localhost:8080/GlySpace-0.2/service';
+  private $urlBase = 'http://${hostname}/glyspace/service';
+//  private $urlBase = 'http://glycomics.ccrc.uga.edu/glyspace/service';
+
+	 /* Glycan Management
+	 */
+	public function glycansAdd($strc, $enco, $npEnc) {
+		$service = '/glycans/add';
+		$data = array (
+				'structure' => $strc,
+				'encoding' => $enco 
+		);
+		return  $this->gsUserPost ( $service, $data, $npEnc );
+	}
+	private function gsUserPost($serviceName, $data, $npEnc) {
+		$url = $this->urlBase . $serviceName;
+		$data = json_encode ( $data );
+		$headers = array (
+				"Content-Type: application/json",
+				"Authorization: Basic " . "$npEnc" 
+		);
+		$options = array (
+				'http' => array (
+						'method' => 'POST',
+						'header' => implode ( "\r\n", $headers ),
+						'content' => $data 
+				) 
+		);
+		return file_get_contents ( $url, false, stream_context_create ( $options ) );
+	}
+	public function imageGlycan($strc, $enco) {
+		$service = '/glycans/image/glycan?format=png&notation=cfg&style=extended';
+		$data = array (
+				'structure' => $strc,
+				'encoding' => "" 
+		);
+		$url = $this->urlBase . $service;
+		$data = json_encode ( $data );
+		$options = array (
+				'http' => array (
+						'method' => 'POST',
+						'header' => 'Content-Type: application/json',
+						'content' => $data 
+				) 
+		);
+		$ret = file_get_contents ( $url, false, stream_context_create ( $options ) );
+		$ret = 'data:image/png;base64,' . base64_encode ( $ret );
+		return $ret;
+
+	}
+
+	private function gsPost($serviceName, $data) {
+		$url = $this->urlBase . $serviceName;
+		$data = json_encode ( $data );
+		$options = array (
+				'http' => array (
+						'method' => 'POST',
+						'header' => 'Content-Type: application/json',
+						'content' => $data 
+				) 
+		);
+		return @file_get_contents ( $url, false, stream_context_create ( $options ) );
+	}
+
+	public function queryJson($gid = NULL) {
+		if (empty ( $gid )) {
+			return file_get_contents ( $this->urlBase . "/glycans/G64497KW.json" );
+		}
+		return file_get_contents ( $this->urlBase . "/glycans/$gid.json" );
+	}
+	
+	// GET/glycans/{accessionNumber} 1
+	// GET/glycans/list(?payload=) 2
+	public function query($gid = NULL) {
+		if (empty ( $gid )) {
+			return file_get_contents ( $this->urlBase . "/glycans/list" );
+
+		}
+		
+		return file_get_contents ( $this->urlBase . "/glycans/$gid" );
+		// return file_get_contents("http://www.glyspace.org/glycans/$gid.json");
+	}
+
+	
+	// POST /glycans/search/exact 3
+	public function exact($strc, $enco) {
+		$service = '/glycans/search/exact';
+		$data = array (
+				'structure' => "$strc",
+				'encoding' => "$enco" 
+		);
+		$ret = $this->gsPost ( $service, $data );
+		return $ret;
+   	}
+
+	
+	// POST /glycans/search/substructure 4
+	public function substructure($strc, $enco) {
+		$service = '/glycans/search/substructure';
+        $data = array(
+			'structure' => "$strc",
+			'encoding' => "$enco"
+        );
+		return $this->gsPost($service,$data);
+ 	}   
+
+	
+	// POST /glycans/search/composition 5
+	public function composition($hexNacMin, $hexNacMax, $hexNMin, $hexNMax, $neuAcMin, $neuAcMax, $neuGcMin, $neuGcMax, $hexAMin, $hexAMax, $dHexMin, $dHexMax, $kdoMin, $kdoMax, $kdnMin, $kdnMax, $hexoseMin, $hexoseMax, $pentoseMin, $pentoseMax, $sulfateMin, $sulfateMax, $phosphateMin, $phosphateMax, $methylMin, $methylMax, $acetylMin, $acetylMax, $otherMin, $otherMax) {
+
+		$service = '/glycans/search/composition';
+
+		// Input data
+		$data = array (
+				'hexNac' => array (
+						'min' => "$hexNacMin",
+						'max' => "$hexNacmMax" 
+				),
+				'hexN' => array (
+						'min' => "$hexNMin",
+						'max' => "$hexNMax" 
+				),
+				'neuAc' => array (
+						'min' => "$neuAcMin",
+						'max' => "$neuAcmMax" 
+				),
+				'neuGc' => array (
+						'min' => "$neuGcMin",
+						'max' => "$neuGcmMax" 
+				),
+				'hexA' => array (
+						'min' => "$hexAMin",
+						'max' => "$hexAmax" 
+				),
+				'dHex' => array (
+						'min' => "$dHexMin",
+						'max' => "$dHexMax" 
+				),
+				'kdo' => array (
+						'min' => "$kdoMin",
+						'max' => "$kdoMax" 
+				),
+				'kdn' => array (
+						'min' => "$kdnMin",
+						'max' => "$kdnMax" 
+				),
+				'hexose' => array (
+						'min' => "$hexoseMin",
+						'max' => "$hexoseMax" 
+				),
+				'pentose' => array (
+						'min' => "$pentoseMin",
+						'max' => "$pentoseMax" 
+				),
+				'sulfate' => array (
+						'min' => "$sulfateMin",
+						'max' => "$sulfateMax" 
+				),
+				'phosphate' => array (
+						'min' => "$phosphateMin",
+						'max' => "$phosphateMax" 
+				),
+				'methyl' => array (
+						'min' => "$methylMin",
+						'max' => "$methylMax" 
+				),
+				'acetyl' => array (
+						'min' => "$acetylMin",
+						'max' => "$acetylMax" 
+				),
+				'other' => array (
+						'min' => "$otherMin",
+						'max' => "$otherMax" 
+				) 
+		);
+		return $this->gsPost ( $service, $data );
+	}
+	
+	// POST /glycans/search/user 6
+	public function searchUser($affiliation, $loginId, $email, $password, $fullName) {
+
+		$service = '/glycans/search/user';
+
+		$data = array (
+				'affiliation' => "$affiliation",
+				'loginId' => "$loginId",
+				'email' => "$email",
+				'password' => "$password",
+				'fullName' => "$fullName" 
+		);
+		return $this->gsPost ( $service, $data );
+	}
+	
+	// POST /glycans/check/list 7
+	public function checkList($structure = null, $form) {
+
+		$service = '/glycans/check/list.json';
+		$data = array (
+				'glycan-structure' => array (
+						array (
+								'encoding' => $form,
+								'structure' => rtrim ( $structure ) 
+						) 
+				) 
+		);
+		// print_r(json_encode($data));
+		return $this->gsPost ( $service, $data );
+	}
+
+	public function checkList2($structure = null, $form) {
+		$service = '/glycans/check/list.json';
+		$dataArray = array ();
+		for($i = 0; $i < count ( $structure ); $i ++) {
+			$data = array (
+					'encoding' => $form,
+					'structure' => rtrim ( $structure [$i] ) 
+			);
+			array_push ( $dataArray, $data );
+		}
+		$data = array (
+				'glycan-structure' => $dataArray 
+		);
+		return $this->gsPost ( $service, $data );
+	}
+	
+	// GET/glycans/{accessionNumber}/image 8
+	public function image($gid, $format, $notation, $style) {
+		return file_get_contents ( $this->urlBase . "/glycans/$gid/image?format=$format&notation=$notation&style=$style" );
+
+	}
+	
+	/**
+	 * Contributor Management
+	 */
+	// GET/contributor/{username}
+
+	public function contributor($name = NULL) {
+		return file_get_contents ( $this->urlBase . "/contributor/$name" );
+
+	}
+	
+	/**
+	 * Motif Management
+	 */
+	
+	// GET /motifs/list
+	public function motifList() {
+		return file_get_contents ( $this->urlBase . "/motifs/list" );
+	}
+	
+	// GET /motifs/search(?tag,queryType)
+
+	public function motifSearch($tag=NULL,$tag2=NULL,$type=NULL) {
+		
+		if (empty($tag2)){
+			return file_get_contents("http://www.glyspace.org/service/motifs/search?tag=$tag");
+		}
+
+		return file_get_contents($this->urlBase .  "/motifs/search?tag=$tag&tag=$tag2&queryType=$type");
+
+	}
+	
+	// GET /motifs/get(?motifName="")
+	public function motifGet($name = NULL) {
+		return file_get_contents ( $this->urlBase . "/motifs/get?motifName=$name" );
+	}
+	
+	// GET/motifs/image/{sequenceid}
+	public function motifImage($seqid, $format, $notation, $style) {
+		return file_get_contents ( $this->urlBase . "/motifs/image/$seqid?format=$format&notation=$notation&style=$style" );
+	}
+}
+?>
